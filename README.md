@@ -13,6 +13,8 @@ It includes:
 
 ## ⚙️ System Architecture
 
+  ![Architecture-Diagram](Architecture-Diagram.png)
+  
 - `api-proxy`: Exposes `/weather?city=CityName` and `/health`. Handles:
   - Fallback logic between two unreliable APIs
   - Retry on temporary errors
