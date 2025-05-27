@@ -14,7 +14,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - OPENWEATHER_API_KEY=your_api_key_here
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
     depends_on:
       - redis
 
