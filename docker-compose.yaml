@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  redis:
+    image: redis:alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  api-proxy:
+    build:
+      context: ./api-proxy
+    container_name: api-proxy
+    ports:
+      - "8080:8080"
+    environment:
+      - OPENWEATHER_API_KEY=your_api_key_here
+    depends_on:
+      - redis
+
+  heartbeat-service:
+    build:
+      context: ./heartbeat-service
+    container_name: heartbeat-service
+    depends_on:
+      - api-proxy
+      - redis
