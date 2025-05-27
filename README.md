@@ -59,7 +59,7 @@ It includes:
 
 ```bash
 # Clone this repository
-git clone https://github.com/yourusername/resilient-api-proxy.git
+git clone https://github.com/DwaipayanSom/Resilient-API-Proxy-System.git
 cd resilient-api-proxy
 
 # Start the system
