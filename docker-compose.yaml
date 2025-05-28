@@ -13,8 +13,8 @@ services:
     container_name: api-proxy
     ports:
       - "8080:8080"
-    environment:
-      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
+    env_file:
+      - .env
     depends_on:
       - redis
 
