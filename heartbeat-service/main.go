@@ -1,68 +1,78 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
-	"net/http"
-	"time"
+	"context"  // for managing background tasks (used with Redis)
+	"fmt"      // for formatted printing
+	"log"      // for logging info and errors
+	"net/http" // to make HTTP requests (used for health check)
+	"time"     // to add timeouts, delays, etc.
 
-	"github.com/redis/go-redis/v9"
+	"github.com/redis/go-redis/v9" // Redis client library
 )
 
-var redisClient *redis.Client
-var ctx = context.Background()
+// Declare global variables
+var redisClient *redis.Client  // Redis client instance
+var ctx = context.Background() // context for Redis operations
 
 func main() {
-	// Connect to Redis
+	// Connect to the Redis service running in Docker
 	redisClient = redis.NewClient(&redis.Options{
-		Addr: "redis:6379", // Redis host in Docker Compose
+		Addr: "redis:6379", // Redis hostname inside Docker Compose network
 	})
 
-	// Start Redis subscriber in a goroutine
+	// Start listening to status messages published on Redis in a new goroutine
 	go subscribeToStatus()
 
-	// Run heartbeat every 5 seconds
+	// Continuously check the health of API Proxy every 5 seconds
 	for {
-		checkHealth()
-		time.Sleep(5 * time.Second)
+		checkHealth()               // perform the health check
+		time.Sleep(5 * time.Second) // wait 5 seconds before next check
 	}
 }
 
-// Check API Proxy /health endpoint
+// Makes a GET request to /health endpoint of API Proxy service
 func checkHealth() {
+	// Create a new HTTP client with a 5-second timeout
 	client := http.Client{
 		Timeout: 5 * time.Second,
 	}
 
-	resp, err := client.Get("http://api-proxy:8080/health") // Docker Compose service name
+	// Attempt to call the health endpoint of the api-proxy service
+	resp, err := client.Get("http://api-proxy:8080/health") // Use Docker Compose service name
 	if err != nil {
+		// If there's a network error (e.g., container not reachable)
 		log.Println("❌ API Proxy is unreachable:", err)
-		mockSlackAlert("API Proxy failed health check!")
+		mockSlackAlert("API Proxy failed health check!") // send mock alert
 		return
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() // close the response body when done
 
+	// If the response doesn't return HTTP 200 OK
 	if resp.StatusCode != 200 {
 		log.Println("❌ API Proxy unhealthy status code:", resp.StatusCode)
-		mockSlackAlert("API Proxy returned non-200 from /health!")
+		mockSlackAlert("API Proxy returned non-200 from /health!") // send mock alert
 		return
 	}
 
+	// If everything is fine
 	log.Println("✅ API Proxy is healthy")
 }
 
-// Subscribe to Redis status channel
+// Listens for messages published on the Redis channel and prints them
 func subscribeToStatus() {
+	// Subscribe to the "status_channel" in Redis
 	sub := redisClient.Subscribe(ctx, "status_channel")
+
+	// Get the channel that receives published messages
 	ch := sub.Channel()
 
+	// Loop over incoming messages
 	for msg := range ch {
-		log.Println("📡 Status from API Proxy:", msg.Payload)
+		log.Println("📡 Status from API Proxy:", msg.Payload) // print message content to console
 	}
 }
 
-// Mock alert (console log)
+// Simulates sending an alert to Slack (just prints to terminal)
 func mockSlackAlert(msg string) {
 	fmt.Println("🚨 MOCK SLACK ALERT:", msg)
 }
